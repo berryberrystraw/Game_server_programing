@@ -172,7 +172,7 @@ void send_signal()
 {
 	kill(enemypid, 10);
 	//시그널 종료
-	if(turn > 15)
+	if(turn > 6)
 	{
 		signal_opponent = 0;
 	}
@@ -603,7 +603,7 @@ void actInput(actInfo* info)
 						map[p1.posi][p1.posj] = '@';
 				info->act[info->actCount] = 1;
 				info->actCount++;
-				display_clear();
+				system("clear");
 				print_playerPos();
 			}
 			else if (in == 2)
@@ -626,7 +626,7 @@ void actInput(actInfo* info)
 						map[p1.posi][p1.posj] = '@';
 				info->act[info->actCount] = 2;
 				info->actCount++;
-				display_clear();
+				system("clear");
 				print_playerPos();
 			}
 			else if (in == 3)
@@ -649,7 +649,7 @@ void actInput(actInfo* info)
 						map[p1.posi][p1.posj] = '@';
 				info->act[info->actCount] = 3;
 				info->actCount++;
-				display_clear();
+				system("clear");
 				print_playerPos();
 			}
 			else if (in == 4)
@@ -672,7 +672,7 @@ void actInput(actInfo* info)
 						map[p1.posi][p1.posj] = '@';
 				info->act[info->actCount] = 4;
 				info->actCount++;
-				display_clear();
+				system("clear");
 				print_playerPos();
 			}
 			else
@@ -829,120 +829,118 @@ int main() {
 	map[9][9] = '@';
 
 	actInfo info;
-	
-	if(fork() == 0){
-		n = matchmaking();
-		initMemory(&info, n);
-		// 호스트(선턴) 
-		if(n==1){
-			while (1)
+
+	n = matchmaking();
+	initMemory(&info, n);
+	// 호스트(선턴) 
+	if(n==1){
+		while (1)
+		{
+			info.actCount = 0;
+			actInput(&info);
+			SaveInfo(&info); //공유 메모리에 행동 저장
+			send_signal(); //시그널을 보낸 뒤 시그널이 올 때까지 기다림 
+			print(&info);//공유메모리에서 상대 행동 읽어와서 p2_act 호출(상대 행동 처리)
+			turn++;
+			update();
+			if (turn > 6)
 			{
-				info.actCount = 0;
-				actInput(&info);
-				SaveInfo(&info); //공유 메모리에 행동 저장
-				send_signal(); //시그널을 보낸 뒤 시그널이 올 때까지 기다림 
-				print(&info);//공유메모리에서 상대 행동 읽어와서 p2_act 호출(상대 행동 처리)
-				turn++;
-				update();
-				if (turn > 15)
+				display_clear();
+				if (p1.score > p2.score)
 				{
-					display_clear();
-					if (p1.score > p2.score)
-					{
-						printf("나의 점수 : %d\n",p1.score);
-						printf("상대방 점수 : %d\n",p2.score);
-						printf("승리");
-					}
-					else if (p1.score < p2.score)
-					{
-						printf("나의 점수 : %d\n",p1.score);
-						printf("상대방 점수 : %d\n",p2.score);
-						printf("패배");
-					}
-					else
-					{
-						printf("나의 점수 : %d\n",p1.score);
-						printf("상대방 점수 : %d\n",p2.score);
-						printf("무승부");
-					}	
-
-					print_act();
-					exit_game();
-					break;
+					printf("나의 점수 : %d\n",p1.score);
+					printf("상대방 점수 : %d\n",p2.score);
+					printf("승리");
 				}
-				p1.money += 2;
-				p2.money += 2;
-
-				p1.bp += 2;
-				p2.bp += 2;
-			}
-		}
-
-		if(n==2){
-			while (1)
-			{
-				if(turn == 0){
-					while (signal_opponent){
-						sleep(1);
-					}
-					signal_opponent = 1;
-				}
-				print(&info);//공유메모리에서 상대 행동 읽어와서 p2_act 호출(상대 행동 처리)
-				info.actCount = 0;
-				actInput(&info);
-				SaveInfo(&info); //공유 메모리에 행동 저장
-				turn++;
-				update();
-				send_signal(); //시그널을 보낸 뒤 시그널이 올 때까지 기다림 
-				if (turn > 15)
+				else if (p1.score < p2.score)
 				{
-					display_clear();
-					if (p1.score > p2.score)
-					{
-						printf("나의 점수 : %d\n",p1.score);
-						printf("상대방 점수 : %d\n",p2.score);
-						printf("승리");
-					}
-					else if (p1.score < p2.score)
-					{
-						printf("나의 점수 : %d\n",p1.score);
-						printf("상대방 점수 : %d\n",p2.score);
-						printf("패배");
-					}
-					else
-					{
-						printf("나의 점수 : %d\n",p1.score);
-						printf("상대방 점수 : %d\n",p2.score);
-						printf("무승부");
-					}	
-
-					print_act();
-					break;
+					printf("나의 점수 : %d\n",p1.score);
+					printf("상대방 점수 : %d\n",p2.score);
+					printf("패배");
 				}
-				p1.money += 2;
-				p2.money += 2;
+				else
+				{
+					printf("나의 점수 : %d\n",p1.score);
+					printf("상대방 점수 : %d\n",p2.score);
+					printf("무승부");
+				}	
 
-				p1.bp += 2;
-				p2.bp += 2;
+				print_act();
+				exit_game();
+				break;
 			}
+			p1.money += 2;
+			p2.money += 2;
+
+			p1.bp += 2;
+			p2.bp += 2;
 		}
 	}
 
-	else{
-		wait(&status);
-		
-		//공유 메모리 종료
-		if (shmdt(info.Player) == -1) {
-			perror("shmdt");
-			exit(1);
-		}
+	if(n==2){
+		while (1)
+		{
+			if(turn == 0){
+				while (signal_opponent){
+					sleep(1);
+				}
+				signal_opponent = 1;
+			}
+			print(&info);//공유메모리에서 상대 행동 읽어와서 p2_act 호출(상대 행동 처리)
+			info.actCount = 0;
+			actInput(&info);
+			SaveInfo(&info); //공유 메모리에 행동 저장
+			turn++;
+			update();
+			send_signal(); //시그널을 보낸 뒤 시그널이 올 때까지 기다림 
+			if (turn > 6)
+			{
+				display_clear();
+				if (p1.score > p2.score)
+				{
+					printf("나의 점수 : %d\n",p1.score);
+					printf("상대방 점수 : %d\n",p2.score);
+					printf("승리");
+				}
+				else if (p1.score < p2.score)
+				{
+					printf("나의 점수 : %d\n",p1.score);
+					printf("상대방 점수 : %d\n",p2.score);
+					printf("패배");
+				}
+				else
+				{
+					printf("나의 점수 : %d\n",p1.score);
+					printf("상대방 점수 : %d\n",p2.score);
+					printf("무승부");
+				}	
 
-		// 공유 메모리 삭제
+				print_act();
+				break;
+			}
+			p1.money += 2;
+			p2.money += 2;
+
+			p1.bp += 2;
+			p2.bp += 2;
+		}
+	}
+
+		
+	//공유 메모리 종료
+	if (shmdt(info.Player) == -1) {
+		perror("shmdt");
+		exit(1);
+	}
+
+	// 호스트 쪽에서 공유 메모리 삭제
+	if (n == 1) {
 		if (shmctl(info.shmid, IPC_RMID, NULL) == -1) {
 			perror("shmctl");
 			exit(1);
 		}
-
-		return 0;
 	}
+
+	return 0;
+
 }
